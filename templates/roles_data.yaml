@@ -8,7 +8,7 @@
   description: |
     Controller role that has all the controler services loaded and handles
     Database, Messaging and Network functions.
-  CountDefault: 1
+  CountDefault: 3
   tags:
     - primary
     - controller
@@ -42,9 +42,6 @@
     - OS::TripleO::Services::BarbicanBackendKmip
     - OS::TripleO::Services::BarbicanBackendPkcs11Crypto
     - OS::TripleO::Services::CACerts
-    - OS::TripleO::Services::CeilometerApi
-    - OS::TripleO::Services::CeilometerCollector
-    - OS::TripleO::Services::CeilometerExpirer
     - OS::TripleO::Services::CeilometerAgentCentral
     - OS::TripleO::Services::CeilometerAgentNotification
     - OS::TripleO::Services::CephExternal
@@ -64,6 +61,7 @@
     - OS::TripleO::Services::CinderBackendNetApp
     - OS::TripleO::Services::CinderBackendScaleIO
     - OS::TripleO::Services::CinderBackendVRTSHyperScale
+    - OS::TripleO::Services::CinderBackendNVMeOF
     - OS::TripleO::Services::CinderBackup
     - OS::TripleO::Services::CinderHPELeftHandISCSI
     - OS::TripleO::Services::CinderScheduler
@@ -71,6 +69,13 @@
     - OS::TripleO::Services::Clustercheck
     - OS::TripleO::Services::Collectd
     - OS::TripleO::Services::Congress
+    - OS::TripleO::Services::ContainerImagePrepare
+    - OS::TripleO::Services::DesignateApi
+    - OS::TripleO::Services::DesignateCentral
+    - OS::TripleO::Services::DesignateProducer
+    - OS::TripleO::Services::DesignateWorker
+    - OS::TripleO::Services::DesignateMDNS
+    - OS::TripleO::Services::DesignateSink
     - OS::TripleO::Services::Docker
     - OS::TripleO::Services::Ec2Api
     - OS::TripleO::Services::Etcd
@@ -90,7 +95,9 @@
     - OS::TripleO::Services::Ipsec
     - OS::TripleO::Services::IronicApi
     - OS::TripleO::Services::IronicConductor
+    - OS::TripleO::Services::IronicInspector
     - OS::TripleO::Services::IronicPxe
+    - OS::TripleO::Services::IronicNeutronAgent
     - OS::TripleO::Services::Iscsid
     - OS::TripleO::Services::Keepalived
     - OS::TripleO::Services::Kernel
@@ -106,6 +113,7 @@
     - OS::TripleO::Services::ManilaScheduler
     - OS::TripleO::Services::ManilaShare
     - OS::TripleO::Services::Memcached
+    - OS::TripleO::Services::MetricsQdr
     - OS::TripleO::Services::MistralApi
     - OS::TripleO::Services::MistralEngine
     - OS::TripleO::Services::MistralExecutor
@@ -150,7 +158,8 @@
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::Pacemaker
     - OS::TripleO::Services::PankoApi
-    - OS::TripleO::Services::RabbitMQ
+    - OS::TripleO::Services::OsloMessagingRpc
+    - OS::TripleO::Services::OsloMessagingNotify
     - OS::TripleO::Services::Redis
     - OS::TripleO::Services::Rhsm
     - OS::TripleO::Services::RsyslogSidecar
@@ -174,27 +183,29 @@
     - OS::TripleO::Services::Vpp
     - OS::TripleO::Services::Zaqar
     - OS::TripleO::Services::Ptp
+    - OS::TripleO::Services::Xinetd
     #Additional Services
-    #- OS::TripleO::Services::NovaCompute
-    #- OS::TripleO::Services::NovaLibvirt
-    #- OS::TripleO::Services::NovaMigrationTarget
-    #- OS::TripleO::Services::ComputeCeilometerAgent
-    #- OS::TripleO::Services::ComputeNeutronL3Agent
-    #- OS::TripleO::Services::ComputeNeutronMetadataAgent
-    #- OS::TripleO::Services::CephOSD
+    - OS::TripleO::Services::NovaCompute
+    - OS::TripleO::Services::NovaLibvirt
+    - OS::TripleO::Services::NovaMigrationTarget
+    - OS::TripleO::Services::ComputeCeilometerAgent
+    - OS::TripleO::Services::ComputeNeutronL3Agent
+    - OS::TripleO::Services::ComputeNeutronMetadataAgent
+    - OS::TripleO::Services::CephOSD
 ###############################################################################
 # Role: Compute                                                               #
 ###############################################################################
 - name: Compute
   description: |
     Basic Compute Node role
-  CountDefault: 1
+  CountDefault: 0
   networks:
     - InternalApi
     - Tenant
     - Storage
-    - StorageMgmt
   HostnameFormatDefault: '%stackname%-compute-%index%'
+  RoleParametersDefault:
+    TunedProfileName: "virtual-host"
   # Deprecated & backward-compatible values (FIXME: Make parameters consistent)
   # Set uses_deprecated_params to True if any deprecated params are used.
   uses_deprecated_params: True
@@ -205,7 +216,6 @@
   deprecated_param_ips: 'NovaComputeIPs'
   deprecated_server_resource_name: 'NovaCompute'
   deprecated_nic_config_name: 'compute.yaml'
-  disable_upgrade_deployment: True
   ServicesDefault:
     - OS::TripleO::Services::Aide
     - OS::TripleO::Services::AuditD
@@ -225,12 +235,14 @@
     - OS::TripleO::Services::Iscsid
     - OS::TripleO::Services::Kernel
     - OS::TripleO::Services::LoginDefs
+    - OS::TripleO::Services::MetricsQdr
     - OS::TripleO::Services::MySQLClient
     - OS::TripleO::Services::NeutronBgpVpnBagpipe
     - OS::TripleO::Services::NeutronLinuxbridgeAgent
     - OS::TripleO::Services::NeutronVppAgent
     - OS::TripleO::Services::NovaCompute
     - OS::TripleO::Services::NovaLibvirt
+    - OS::TripleO::Services::NovaLibvirtGuests
     - OS::TripleO::Services::NovaMigrationTarget
     - OS::TripleO::Services::Ntp
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -250,15 +262,6 @@
     - OS::TripleO::Services::OVNController
     - OS::TripleO::Services::OVNMetadataAgent
     - OS::TripleO::Services::Ptp
-    #Additional Services
-    #- OS::TripleO::Services::CephOSD
-    #Ceph Cluster Services
-    #- OS::TripleO::Services::CephExternal
-    #- OS::TripleO::Services::CephMds
-    #- OS::TripleO::Services::CephMgr
-    #- OS::TripleO::Services::CephMon
-    #- OS::TripleO::Services::CephRbdMirror
-    #- OS::TripleO::Services::CephRgw
 ###############################################################################
 # Role: BlockStorage                                                          #
 ###############################################################################
@@ -285,6 +288,7 @@
     - OS::TripleO::Services::Iscsid
     - OS::TripleO::Services::Kernel
     - OS::TripleO::Services::LoginDefs
+    - OS::TripleO::Services::MetricsQdr
     - OS::TripleO::Services::MySQLClient
     - OS::TripleO::Services::Ntp
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -317,7 +321,6 @@
   deprecated_param_image: 'SwiftStorageImage'
   deprecated_param_flavor: 'OvercloudSwiftStorageFlavor'
   deprecated_nic_config_name: 'swift-storage.yaml'
-  disable_upgrade_deployment: True
   ServicesDefault:
     - OS::TripleO::Services::Aide
     - OS::TripleO::Services::AuditD
@@ -329,6 +332,7 @@
     - OS::TripleO::Services::Ipsec
     - OS::TripleO::Services::Kernel
     - OS::TripleO::Services::LoginDefs
+    - OS::TripleO::Services::MetricsQdr
     - OS::TripleO::Services::MySQLClient
     - OS::TripleO::Services::Ntp
     - OS::TripleO::Services::ContainersLogrotateCrond
@@ -368,6 +372,7 @@
     - OS::TripleO::Services::Ipsec
     - OS::TripleO::Services::Kernel
     - OS::TripleO::Services::LoginDefs
+    - OS::TripleO::Services::MetricsQdr
     - OS::TripleO::Services::MySQLClient
     - OS::TripleO::Services::Ntp
     - OS::TripleO::Services::ContainersLogrotateCrond

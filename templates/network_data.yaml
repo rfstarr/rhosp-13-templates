@@ -53,44 +53,44 @@
 
 - name: Storage
   vip: true
-  vlan: 1004
+  vlan: 241 
   name_lower: storage
-  ip_subnet: '192.168.102.0/24'
-  allocation_pools: [{'start': '192.168.102.40', 'end': '192.168.102.250'}]
+  ip_subnet: '192.168.241.0/24'
+  allocation_pools: [{'start': '192.168.241.40', 'end': '192.168.241.250'}]
   ipv6_subnet: 'fd00:fd00:fd00:3000::/64'
   ipv6_allocation_pools: [{'start': 'fd00:fd00:fd00:3000::10', 'end': 'fd00:fd00:fd00:3000:ffff:ffff:ffff:fffe'}]
 - name: StorageMgmt
   name_lower: storage_mgmt
   vip: true
-  vlan: 1005
-  ip_subnet: '192.168.103.0/24'
-  allocation_pools: [{'start': '192.168.103.40', 'end': '192.168.103.250'}]
+  vlan: 242 
+  ip_subnet: '192.168.242.0/24'
+  allocation_pools: [{'start': '192.168.242.40', 'end': '192.168.242.250'}]
   ipv6_subnet: 'fd00:fd00:fd00:4000::/64'
   ipv6_allocation_pools: [{'start': 'fd00:fd00:fd00:4000::10', 'end': 'fd00:fd00:fd00:4000:ffff:ffff:ffff:fffe'}]
 - name: InternalApi
   name_lower: internal_api
   vip: true
-  vlan: 1002
-  ip_subnet: '192.168.100.0/24'
-  allocation_pools: [{'start': '192.168.100.40', 'end': '192.168.100.250'}]
+  vlan: 243 
+  ip_subnet: '192.168.243.0/24'
+  allocation_pools: [{'start': '192.168.243.40', 'end': '192.168.243.250'}]
   ipv6_subnet: 'fd00:fd00:fd00:2000::/64'
   ipv6_allocation_pools: [{'start': 'fd00:fd00:fd00:2000::10', 'end': 'fd00:fd00:fd00:2000:ffff:ffff:ffff:fffe'}]
 - name: Tenant
   vip: false  # Tenant network does not use VIPs
   name_lower: tenant
-  vlan: 1003
-  ip_subnet: '192.168.101.0/24'
-  allocation_pools: [{'start': '192.168.101.40', 'end': '192.168.101.250'}]
+  vlan: 244 
+  ip_subnet: '192.168.244.0/24'
+  allocation_pools: [{'start': '192.168.244.40', 'end': '192.168.244.250'}]
   # Note that tenant tunneling is only compatible with IPv4 addressing at this time.
   ipv6_subnet: 'fd00:fd00:fd00:5000::/64'
   ipv6_allocation_pools: [{'start': 'fd00:fd00:fd00:5000::10', 'end': 'fd00:fd00:fd00:5000:ffff:ffff:ffff:fffe'}]
 - name: External
   vip: true
   name_lower: external
-  vlan: 1000
-  ip_subnet: '192.0.2.0/24'
-  allocation_pools: [{'start': '192.0.2.40', 'end': '192.0.2.69'}]
-  gateway_ip: '192.0.2.1'
+  vlan: 245 
+  ip_subnet: '192.168.245.0/24'
+  allocation_pools: [{'start': '192.168.245.40', 'end': '192.168.245.69'}]
+  gateway_ip: '192.168.245.1'
   ipv6_subnet: '2001:db8:fd00:1000::/64'
   ipv6_allocation_pools: [{'start': '2001:db8:fd00:1000::10', 'end': '2001:db8:fd00:1000:ffff:ffff:ffff:fffe'}]
   gateway_ipv6: '2001:db8:fd00:1000::1'
@@ -100,8 +100,8 @@
   enabled: false
   vip: false  # Management network does not use VIPs
   name_lower: management
-  vlan: 906
-  ip_subnet: '192.168.106.0/24'
-  allocation_pools: [{'start': '192.168.106.40', 'end': '192.168.106.69'}]
+  vlan: 246 
+  ip_subnet: '192.168.246.0/24'
+  allocation_pools: [{'start': '192.168.246.40', 'end': '192.168.246.69'}]
   ipv6_subnet: 'fd00:fd00:fd00:6000::/64'
   ipv6_allocation_pools: [{'start': 'fd00:fd00:fd00:6000::10', 'end': 'fd00:fd00:fd00:6000:ffff:ffff:ffff:fffe'}]

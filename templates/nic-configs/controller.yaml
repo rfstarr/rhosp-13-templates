@@ -10,10 +10,16 @@ parameters:
     default: ''
     description: IP address/subnet on the external network
     type: string
+  ExternalInterfaceRoutes:
+    default: [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}]
+    type: json
   InternalApiIpSubnet:
     default: ''
     description: IP address/subnet on the internal_api network
     type: string
+  InternalApiInterfaceRoutes:
+    default: [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}] 
+    type: json
   StorageIpSubnet:
     default: ''
     description: IP address/subnet on the storage network
@@ -56,10 +62,20 @@ parameters:
     default: 40
     description: Vlan ID for the storage mgmt network traffic.
     type: number
+  StorageInterfaceRoutes:
+    default: [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}] 
+    type: json
+  StorageMgmtInterfaceRoutes:
+    default: [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}] 
+    type: json
+
   TenantNetworkVlanID:
     default: 50
     description: Vlan ID for the tenant network traffic.
     type: number
+  TenantInterfaceRoutes:
+    default: [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}] 
+    type: json
   ManagementNetworkVlanID:
     default: 60
     description: Vlan ID for the management network traffic.
@@ -109,10 +125,10 @@ resources:
                     get_param: BondInterfaceOvsOptions
                   members:
                   - type: interface
-                    name: ens2f2
+                    name: em3 
                     primary: true
                   - type: interface
-                    name: ens2f3
+                    name: em4 
                 - type: vlan
                   device: bond1
                   vlan_id:
@@ -148,10 +164,10 @@ resources:
                     get_param: BondInterfaceOvsOptions
                   members:
                   - type: interface
-                    name: ens2f0
+                    name: em1 
                     primary: true
                   - type: interface
-                    name: ens2f1
+                    name: em2 
                 - type: vlan
                   device: bond0
                   vlan_id:
