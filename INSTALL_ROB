@@ -1,0 +1,71 @@
+###BEFORE YOU START - These is my edits to Kevins original repo running OSP14 in a 3 node hyperconverged setup. 
+This setup is 3 boxes and one director VM - The 3 controller nodes run controller, ceph storage, hypervisor --everthing
+Director node 32GB ram(roughly) 4cores+ 
+    - 1 connection (eth0) to your network with access to the IPMI interface (172.30.255.246 in my lab) 
+    - 1 connection (eth1) to openstack deployment network (the install configures this leave it unconfigured)  
+Hyperconverged 3 boxes 128GB ram 12cores+, 1 boot disk (sda), 1 ceph journal disk ssd (sdb) , 2 ceph OSD disks (sdc,sdd)
+    - In this setup have 1 IPMI, 4x1GB connections setup for bond0 bond1 (no port channels) 
+ 
+The eth1 inteface on the director is navtive vlan for provisioning 192.168.24.0/24 on the switch side
+em1-em4 on 3 physical boxes are all trunks with native vlan for provisioning 192.168.24.0/24
+
+Internal director  provisioning network 192.168.24.0/24 (192.165.24.5 is the director provisioning interface)
+External director  network 172.30.255.246/25 
+
+
+#############################
+subscription-manager register
+
+useradd stack
+passwd stack
+echo "stack ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/stack
+chmod 0440 /etc/sudoers.d/stack
+su - stack
+sudo vi etc/hosts (ip fqn shortname) 
+
+sudo subscription-manager attach --pool=12345
+sudo subscription-manager repos --disable=*
+sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=r
+hel-7-server-openstack-14-rpms --enable=rhel-7-server-rhceph-3-tools-rpms 
+
+sudo yum update -y
+sudo shutdown -r now
+
+su - stack
+sudo yum install -y python-tripleoclient  ceph-ansible
+
+
+
+####git clone or copy all the files to /home/stack 
+
+./generate-container-prepare.sh
+
+openstack undercloud install
+
+#add DNS servers
+openstack subnet set --dns-nameserver 192.168.240.254 --dns-nameserver 172.30.255.1 ctlplane-subnet
+
+#add images
+sudo yum install rhosp-director-images rhosp-director-images-ipa
+mkdir images
+cd images
+for i in /usr/share/rhosp-director-images/overcloud-full-latest-14.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-14.0.tar; do tar -xvf $i; done
+openstack overcloud image upload --image-path /home/stack/images/
+
+#modify instackenv.json
+openstack overcloud node import instackenv.json
+openstack baremetal node list
+openstack overcloud node introspect --all-manageable --provide
+
+#set each node to control
+openstack baremetal node set --property capabilities='profile:control,boot_option:local' 35ec68ab-36b4-4b64-a130-2b7c61d88861
+
+#get the disk inventory from each box
+openstack baremetal introspection data save 760afb64-7673-40fe-9019-ac7d0a59186a | jq ".inventory.disks"
+
+#set the root disk for each node
+openstack baremetal node set --property root_device='{"serial": "61866da04f380d001ea4e13c12e36ad6"}' 1a4e30da-b6dc-499d-ba87-0bd8a3819bc0
+
+
+#go through deploy.sh and edit each one of the files listed as appropriate under the templates directory. 
+
