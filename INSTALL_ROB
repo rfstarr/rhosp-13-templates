@@ -1,19 +1,22 @@
 ###BEFORE YOU START - 
-These are my edits to Kevin's repo for running OSP13 in a 3 node hyperconverged setup. I tried with OSP14 and hit issues so this is only tested with 13 
+These are my edits to Kevin's repo for running OSP13 in a 3 node hyperconverged setup. 
+this is only tested with 13. (14 may work) 
 This setup is 3 boxes and one director VM - The 3 controller nodes run controller, ceph storage, hypervisor --everthing
 Director node(vm) 32GB ram 4cores 120GB+ disk
     - 1 connection (eth0) to your network with access to the IPMI interface (172.30.255.246 in my lab) 
-    - 1 connection (eth1) to openstack deployment network (the install configures this leave it unconfigured)  
+    - 1 connection (eth1) to openstack deployment network (192.168.24.0/24 pxe private net- leave it unconfigured)  
 Hyperconverged 3 boxes 128GB ram 12cores, 1 boot disk (sda), 1 ceph journal disk ssd (sdb) , 2 ceph OSD disks (sdc,sdd)
     - In this setup have 1 IPMI, 4x1GB connections setup for bond0 bond1 (no lacp) 
  
 The eth1 inteface on the director has native vlan for provisioning 192.168.24.0/24 on the switch side
-em1-em4 on 3 physical boxes are all trunks(all vlans every port), with native vlan (untagged) 192.168.24.0/24 for PXE - All other openstack networks bellow are vlans on these links. 
+em1-em4 on 3 physical boxes are all trunks(all vlans every port), with native vlan (untagged) 192.168.24.0/24 for PXE 
+    All other openstack networks bellow are vlans on these links. 
+
 There is no dedicated Interface for provisioning. 
-default route set to 192.168.24.5 for the openstack nodes so host traffic go's throug the director.  
+the default route set to 192.168.24.5 for the openstack nodes so host traffic go's throug the director.  
 
 Internal director eth1 provisioning network 192.168.24.0/24 (192.165.24.5 is the director provisioning interface)
-External director eth0 network 172.30.255.246/25 
+External director eth0 (host ip) 172.30.255.246 
 
 set your nodes to pxe first boot device. 
 
