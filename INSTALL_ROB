@@ -41,7 +41,8 @@ Management 246 192.168.246/24
            [nodes01-3] 
 
 #############################
-#
+#Deploy your director VM with 16GB+ memory and two interfaces. 
+#Install RHEL 120GB+ disk
 subscription-manager register
 
 useradd stack
@@ -49,12 +50,11 @@ passwd stack
 echo "stack ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/stack
 chmod 0440 /etc/sudoers.d/stack
 su - stack
-sudo vi etc/hosts (ip fqn shortname) 
+sudo vi etc/hosts # add (ip fqn shortnamei for the director) 
 
 sudo subscription-manager attach --pool=12345
 sudo subscription-manager repos --disable=*
-sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=r
-hel-7-server-openstack-13-rpms --enable=rhel-7-server-rhceph-3-tools-rpms 
+sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-13-rpms --enable=rhel-7-server-rhceph-3-tools-rpms 
 
 sudo yum update -y
 sudo shutdown -r now
@@ -64,31 +64,34 @@ sudo yum install -y python-tripleoclient  ceph-ansible
 
 ####copy/clone all the files from git repo to /home/stack 
 
-edit undercloud.conf (fix hostname, subnets and domain)
+vi undercloud.conf #(fix hostname, subnets and domain)
 
 openstack undercloud install
 
 #Containers
 ./generate-container-prepare.sh
 
-#add DNS servers
+#Add DNS servers
 openstack subnet set --dns-nameserver 192.168.240.254 --dns-nameserver 172.30.255.1 ctlplane-subnet
 
-#add images
+#Add images
 sudo yum install rhosp-director-images rhosp-director-images-ipa
 mkdir images
 cd images
 for i in /usr/share/rhosp-director-images/overcloud-full-latest-13.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-13.0.tar; do tar -xvf $i; done
 openstack overcloud image upload --image-path /home/stack/images/
 
-#modify instackenv.json
+#Modify instackenv.json
+vi instackenv.json
 openstack overcloud node import instackenv.json
 openstack baremetal node list
 
 
-################If the nodes are UEFI then you need to set that. 
+################If the nodes are UEFI then you need to set that for each node. 
  NODE=node01 ; openstack baremetal node set --property capabilities="profile:control,boot_mode:uefi,$(openstack baremetal node show $NODE -f json -c properties | jq -r .properties.capabilities | sed "s/boot_mode:[^,]*,//g")" $NODE
-
+#
+#OR
+#
 #################If the nodes are PXE set each node to control
 openstack baremetal node set --property capabilities='profile:control,boot_option:local' node02 
 
@@ -102,7 +105,7 @@ openstack baremetal node set --property root_device='{"serial": "61866da04f380d0
 
 
 #go through deploy.sh and edit each one of the files listed as appropriate under the templates directory. 
-set your disks in templates/ceph-environment.yaml - journal disk on the upper part, set non-collocated to collocated if you have all ssd and don't want a seperate journal disk
+set your disks in templates/ceph-environment.yaml - journal disk on the lower part, set non-collocated to collocated if you have all ssd and don't want a seperate journal disk
 set your cloudname templates/cloudname.yaml
 set your vlans and subnets templates/network-environment.yaml
 also in here templates/network_data.yaml

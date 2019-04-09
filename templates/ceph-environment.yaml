@@ -17,22 +17,22 @@ parameter_defaults:
     osd_mkfs_options_xfs: '-f -d agcount=24'
   CephPools:
     - name: volumes
-      pg_num: 16
+      pg_num: 64 
       application: rbd
     - name: vms
-      pg_num: 8 
-      application: rbd
-    - name: images
-      pg_num: 4
-      application: rbd
-    - name: backups
       pg_num: 16 
       application: rbd
+    - name: images
+      pg_num: 8 
+      application: rbd
+    - name: backups
+      pg_num: 32 
+      application: rbd
     - name: metrics
-      pg_num: 4 
+      pg_num: 8 
       application: openstack_gnocchi
     - name: default.rgw.buckets.index
-      pg_num: 4 
+      pg_num: 8 
       application: rgw
     - name: default.rgw.buckets.data
       pg_num: 8 
@@ -40,7 +40,9 @@ parameter_defaults:
   CephAnsibleDisksConfig:
     dmcrypt: false
     devices:
-      - /dev/sdb
+      - /dev/sdc
+      - /dev/sdd
     osd_scenario: non-collocated
     dedicated_devices:
-      - /dev/sdc
+      - /dev/sdb
+      - /dev/sdb
