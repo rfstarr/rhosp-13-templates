@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 sudo openstack overcloud container image prepare \
-  --namespace=registry.access.redhat.com/rhosp14 \
+  --namespace=registry.access.redhat.com/rhosp13 \
+  --push-destination=192.168.24.5:8787 \
   --prefix=openstack- \
   -e /usr/share/openstack-tripleo-heat-templates/environments/services/barbican.yaml \
   -e /usr/share/openstack-tripleo-heat-templates/environments/barbican-backend-simple-crypto.yaml \
@@ -16,4 +17,4 @@ sudo openstack overcloud container image prepare \
   --output-env-file=/home/stack/templates/overcloud_images.yaml \
   --output-images-file /home/stack/local_registry_images.yaml
 
-#sudo openstack overcloud container image upload --config-file /home/stack/local_registry_images.yaml --verbose
+sudo openstack overcloud container image upload --config-file /home/stack/local_registry_images.yaml --verbose

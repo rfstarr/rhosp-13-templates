@@ -1,4 +1,5 @@
-###BEFORE YOU START - These is my edits to Kevin's repo running OSP14 in a 3 node hyperconverged setup. 
+###BEFORE YOU START - 
+These are my edits to Kevin's repo for running OSP13 in a 3 node hyperconverged setup. I tried with OSP14 and hit issues so this is only tested with 13 
 This setup is 3 boxes and one director VM - The 3 controller nodes run controller, ceph storage, hypervisor --everthing
 Director node(vm) 32GB ram 4cores 120GB+ disk
     - 1 connection (eth0) to your network with access to the IPMI interface (172.30.255.246 in my lab) 
@@ -6,26 +7,38 @@ Director node(vm) 32GB ram 4cores 120GB+ disk
 Hyperconverged 3 boxes 128GB ram 12cores, 1 boot disk (sda), 1 ceph journal disk ssd (sdb) , 2 ceph OSD disks (sdc,sdd)
     - In this setup have 1 IPMI, 4x1GB connections setup for bond0 bond1 (no lacp) 
  
-The eth1 inteface on the director has navtive vlan for provisioning 192.168.24.0/24 on the switch side
-em1-em4 on 3 physical boxes are all trunks with native vlan for provisioning 192.168.24.0/24 - All other openstack networks are vlans on these. 
-default route set to 192.168.24.5 for the openstack nodes so traffic go's throug the director. 
+The eth1 inteface on the director has native vlan for provisioning 192.168.24.0/24 on the switch side
+em1-em4 on 3 physical boxes are all trunks(all vlans every port), with native vlan (untagged) 192.168.24.0/24 for PXE - All other openstack networks bellow are vlans on these links. 
+There is no dedicated Interface for provisioning. 
+default route set to 192.168.24.5 for the openstack nodes so host traffic go's throug the director.  
 
 Internal director eth1 provisioning network 192.168.24.0/24 (192.165.24.5 is the director provisioning interface)
 External director eth0 network 172.30.255.246/25 
 
 set your nodes to pxe first boot device. 
 
-Networks
+############################Networks
 Provisioning network/pxe 192.168.24.0/24
-type vlan subnet (fix the network templates to match your setup) 
+Lab nets are in 192.168.240.0/20
+TYPE VLAN SUBNET (fix the network templates to match your setup) 
 Storage 241 192.168.241/24
 StorageMgmt 242 192.168.242/24
 InternalApi 243 192.168.243/24
 Tenant 244 192.168.244/24
 External 245 192.168.245/24
 Management 246 192.168.246/24
+############################
+
+            |
+-||||upstream switch|||--
+  |{172.30.x}        |
+[Director VM]        [L3-ToR]         
+{192.168.24/24}_____{192.168.240/20}
+             {PXE}   |  {IPMI+OSP-Networks}
+           [nodes01-3] 
 
 #############################
+#
 subscription-manager register
 
 useradd stack
@@ -38,7 +51,7 @@ sudo vi etc/hosts (ip fqn shortname)
 sudo subscription-manager attach --pool=12345
 sudo subscription-manager repos --disable=*
 sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=r
-hel-7-server-openstack-14-rpms --enable=rhel-7-server-rhceph-3-tools-rpms 
+hel-7-server-openstack-13-rpms --enable=rhel-7-server-rhceph-3-tools-rpms 
 
 sudo yum update -y
 sudo shutdown -r now
@@ -46,13 +59,14 @@ sudo shutdown -r now
 su - stack
 sudo yum install -y python-tripleoclient  ceph-ansible
 
-####git clone or copy all the files to /home/stack 
+####copy/clone all the files from git repo to /home/stack 
 
-./generate-container-prepare.sh
-
-edit undercloud.conf 
+edit undercloud.conf (fix hostname, subnets and domain)
 
 openstack undercloud install
+
+#Containers
+./generate-container-prepare.sh
 
 #add DNS servers
 openstack subnet set --dns-nameserver 192.168.240.254 --dns-nameserver 172.30.255.1 ctlplane-subnet
@@ -61,35 +75,43 @@ openstack subnet set --dns-nameserver 192.168.240.254 --dns-nameserver 172.30.25
 sudo yum install rhosp-director-images rhosp-director-images-ipa
 mkdir images
 cd images
-for i in /usr/share/rhosp-director-images/overcloud-full-latest-14.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-14.0.tar; do tar -xvf $i; done
+for i in /usr/share/rhosp-director-images/overcloud-full-latest-13.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-13.0.tar; do tar -xvf $i; done
 openstack overcloud image upload --image-path /home/stack/images/
 
 #modify instackenv.json
 openstack overcloud node import instackenv.json
 openstack baremetal node list
+
+
+################If the nodes are UEFI then you need to set that. 
+ NODE=node01 ; openstack baremetal node set --property capabilities="profile:control,boot_mode:uefi,$(openstack baremetal node show $NODE -f json -c properties | jq -r .properties.capabilities | sed "s/boot_mode:[^,]*,//g")" $NODE
+
+#################If the nodes are PXE set each node to control
+openstack baremetal node set --property capabilities='profile:control,boot_option:local' node02 
+
 openstack overcloud node introspect --all-manageable --provide
 
-
-#If the nodes are UEFI then you need to set that. 
-# NODE=<NODE NAME OR ID> ; openstack baremetal node set --property capabilities="profile:control,boot_mode:uefi,$(openstack baremetal node show $NODE -f json -c properties | jq -r .properties.capabilities | sed "s/boot_mode:[^,]*,//g")" $NODE
-
-#set each node to control
-openstack baremetal node set --property capabilities='profile:control,boot_option:local' 35ec68ab-36b4-4b64-a130-2b7c61d88861
-
 #get the disk inventory from each box
-openstack baremetal introspection data save 760afb64-7673-40fe-9019-ac7d0a59186a | jq ".inventory.disks"
+openstack baremetal introspection data save node01 | jq ".inventory.disks"
 
 #set the root disk for each node
-openstack baremetal node set --property root_device='{"serial": "61866da04f380d001ea4e13c12e36ad6"}' 1a4e30da-b6dc-499d-ba87-0bd8a3819bc0
+openstack baremetal node set --property root_device='{"serial": "61866da04f380d001ea4e13c12e36ad6"}' node01 
 
 
 #go through deploy.sh and edit each one of the files listed as appropriate under the templates directory. 
-set your disks in templates/ceph-environment.yaml - set non-collocated to collocated if you have all ssd and don't want a seperate journal disk
+set your disks in templates/ceph-environment.yaml - journal disk on the upper part, set non-collocated to collocated if you have all ssd and don't want a seperate journal disk
 set your cloudname templates/cloudname.yaml
 set your vlans and subnets templates/network-environment.yaml
 also in here templates/network_data.yaml
-modify your nic config if you have a different interface layout templates/nic-configs/controller.yaml
+modify your nic config if you have a different interface layout templates/nic-configs/controller.yaml (this assume 4 NICs in 2 bonds)
+edit templates/inject-trust-anchor-hiera.yaml - add contents of /etc/pki/tls/certs/undercloud....pem - make sure you format correctly- delete the overcloud section (unless you added tls for overcloud somewhere, if so then add your certs herre) 
 
 ./deploy.sh
 
+Edit overcloudPostConfig.sh and run to populate env
 
+#######other notes########
+#If you want to change  the number of nodes or roles (change where things run and on what nodes its all done in templates/roles_data.yaml)
+#Modify the number default then scroll down and set which services will run there i.e. having nova or ceph on other nodes.
+#Also change the profile for that node per the step above openstack baremetal node set --property capabilities.....
+#
